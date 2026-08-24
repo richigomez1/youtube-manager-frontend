@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { api, session, wakeUp } from "./api";
+import Metadata from "./Metadata";
 
 /* ─────────────────────────── Secciones (letras = funciones del documento) ─────────────────────────── */
 const SECTIONS = [
-  { key: "A", path: "/metadata", label: "Metadata de un clic", roles: ["admin", "editor"], soon: true },
+  { key: "A", path: "/metadata", label: "Metadata de un clic", roles: ["admin", "editor"] },
   { key: "B", path: "/plantillas", label: "Descripciones rotativas", roles: ["admin", "editor"], soon: true },
   { key: "C", path: "/monitor", label: "Monitor por nicho", roles: ["admin"], soon: true },
   { key: "D", path: "/virales", label: "Virales", roles: ["admin"], soon: true },
@@ -215,10 +216,18 @@ function Nichos() {
     } catch (err) { setNote({ type: "error", text: err.message }); }
   }
 
-  async function saveProfile(n, ai_profile) {
+  async function saveNiche(n, name, ai_profile) {
     try {
-      await api(`/niches/${n.id}`, { method: "PUT", body: { name: n.name, ai_profile } });
-      setNote({ type: "ok", text: `Perfil guardado: ${n.name}` }); load();
+      await api(`/niches/${n.id}`, { method: "PUT", body: { name, ai_profile } });
+      setNote({ type: "ok", text: `Guardado: ${name}` }); load();
+    } catch (err) { setNote({ type: "error", text: err.message }); }
+  }
+
+  async function removeNiche(n) {
+    if (!confirm(`¿Borrar el nicho "${n.name}"? Los canales que lo tengan quedarán sin nicho.`)) return;
+    try {
+      await api(`/niches/${n.id}`, { method: "DELETE" });
+      setNote({ type: "ok", text: `Borrado: ${n.name}` }); load();
     } catch (err) { setNote({ type: "error", text: err.message }); }
   }
 
@@ -243,24 +252,30 @@ function Nichos() {
         <div className="empty"><strong>Sin nichos todavía</strong>Crea el primero arriba: psicología oscura, dinero, meditación, horóscopo…</div>
       )}
       <div className="stack">
-        {niches && niches.map((n) => <NicheCard key={n.id} n={n} onSave={saveProfile} />)}
+        {niches && niches.map((n) => <NicheCard key={n.id} n={n} onSave={saveNiche} onRemove={removeNiche} />)}
       </div>
     </>
   );
 }
 
-function NicheCard({ n, onSave }) {
+function NicheCard({ n, onSave, onRemove }) {
   const [profile, setProfile] = useState(n.ai_profile || "");
+  const [name, setName] = useState(n.name);
+  const dirty = profile !== (n.ai_profile || "") || name.trim() !== n.name;
   return (
     <div className="card">
-      <h3 style={{ margin: "0 0 10px" }}>{n.name}</h3>
+      <div className="row" style={{ marginBottom: 10 }}>
+        <input className="input" style={{ maxWidth: 360, fontWeight: 600 }} value={name} onChange={(e) => setName(e.target.value)} />
+        <span className="grow" />
+        <button className="btn btn-sm btn-danger" onClick={() => onRemove(n)}>Borrar</button>
+      </div>
       <div className="field">
         <label>Perfil para la IA (tono, público, estilo de título y descripción)</label>
         <textarea className="textarea" value={profile} onChange={(e) => setProfile(e.target.value)}
                   placeholder="Ej.: Público 30-55 años hispanohablante. Tono documental, serio, sin clickbait vacío. Títulos con una promesa concreta…" />
       </div>
-      <button className="btn btn-primary btn-sm" disabled={profile === (n.ai_profile || "")} onClick={() => onSave(n, profile)}>
-        Guardar perfil
+      <button className="btn btn-primary btn-sm" disabled={!dirty || !name.trim()} onClick={() => onSave(n, name.trim(), profile)}>
+        Guardar
       </button>
     </div>
   );
@@ -285,7 +300,7 @@ export default function App() {
   if (!role) return <Login onLogin={setRole} />;
 
   const visible = SECTIONS.filter((s) => s.roles.includes(role));
-  const current = visible.find((s) => s.path === path) || visible.find((s) => s.path === "/canales") || visible[0];
+  const current = visible.find((s) => s.path === path) || visible.find((s) => s.path === "/metadata") || visible[0];
   if (current.path !== path) window.history.replaceState({}, "", current.path);
 
   function logout() { session.clear(); setRole(null); go("/"); }
@@ -314,6 +329,7 @@ export default function App() {
         </div>
       </aside>
       <main className="main">
+        {current.path === "/metadata" && <Metadata />}
         {current.path === "/canales" && <Canales />}
         {current.path === "/nichos" && <Nichos />}
         {current.soon && <Soon section={current} />}
