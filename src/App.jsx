@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api, session, wakeUp } from "./api";
 import Metadata from "./Metadata";
+import Privacidad from "./Privacidad";
 
 /* ─────────────────────────── Secciones (letras = funciones del documento) ─────────────────────────── */
 const SECTIONS = [
@@ -297,6 +298,7 @@ export default function App() {
   const [role, setRole] = useState(session.role);
   const [path, go] = useRoute();
 
+  if (path === "/privacidad") return <Privacidad />;
   if (!role) return <Login onLogin={setRole} />;
 
   const visible = SECTIONS.filter((s) => s.roles.includes(role));
