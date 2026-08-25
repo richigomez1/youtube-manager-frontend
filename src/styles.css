@@ -237,6 +237,13 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .thumb-card img { width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: 10px; background: var(--line); display: block; }
 .thumb-meta { font-size: 12px; color: var(--muted); margin-top: 6px; }
 
+/* ── Plantillas ─────────────────────────── */
+.vars { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 4px; }
+.var { font-family: var(--font-mono); font-size: 12px; background: var(--paper); border: 1px solid var(--line); border-radius: 6px; padding: 2px 8px; cursor: pointer; }
+.var:hover { border-color: var(--ink); }
+.preview { white-space: pre-wrap; font-family: var(--font-mono); font-size: 12px; background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 12px; margin: 10px 0 0; max-height: 320px; overflow: auto; }
+.preview-title { margin-top: 10px; font-weight: 600; }
+
 /* ── Página legal ───────────────────────── */
 .legal { max-width: 720px; margin: 0 auto; padding: 48px 24px 80px; }
 .legal h1 { font-family: var(--font-display); font-size: 28px; margin: 0 0 4px; }

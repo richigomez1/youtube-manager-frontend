@@ -3,12 +3,13 @@ import { api, session, wakeUp } from "./api";
 import Metadata from "./Metadata";
 import Privacidad from "./Privacidad";
 import Monitor from "./Monitor";
+import Plantillas from "./Plantillas";
 import Virales, { Miniaturas } from "./Virales";
 
 /* ─────────────────────────── Secciones (letras = funciones del documento) ─────────────────────────── */
 const SECTIONS = [
   { key: "A", path: "/metadata", label: "Metadata de un clic", roles: ["admin", "editor"] },
-  { key: "B", path: "/plantillas", label: "Descripciones rotativas", roles: ["admin", "editor"], soon: true },
+  { key: "B", path: "/plantillas", label: "Descripciones rotativas", roles: ["admin", "editor"] },
   { key: "C", path: "/monitor", label: "Monitor por nicho", roles: ["admin", "editor"] },
   { key: "D", path: "/virales", label: "Virales de hoy", roles: ["admin", "editor"] },
   { key: "G", path: "/miniaturas", label: "Miniaturas", roles: ["admin", "editor"] },
@@ -334,6 +335,7 @@ export default function App() {
       </aside>
       <main className="main">
         {current.path === "/metadata" && <Metadata />}
+        {current.path === "/plantillas" && <Plantillas />}
         {current.path === "/monitor" && <Monitor />}
         {current.path === "/virales" && <Virales />}
         {current.path === "/miniaturas" && <Miniaturas />}
