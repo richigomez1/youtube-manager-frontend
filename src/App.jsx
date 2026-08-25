@@ -2,14 +2,16 @@ import { useEffect, useState } from "react";
 import { api, session, wakeUp } from "./api";
 import Metadata from "./Metadata";
 import Privacidad from "./Privacidad";
+import Monitor from "./Monitor";
+import Virales, { Miniaturas } from "./Virales";
 
 /* ─────────────────────────── Secciones (letras = funciones del documento) ─────────────────────────── */
 const SECTIONS = [
   { key: "A", path: "/metadata", label: "Metadata de un clic", roles: ["admin", "editor"] },
   { key: "B", path: "/plantillas", label: "Descripciones rotativas", roles: ["admin", "editor"], soon: true },
-  { key: "C", path: "/monitor", label: "Monitor por nicho", roles: ["admin"], soon: true },
-  { key: "D", path: "/virales", label: "Virales", roles: ["admin"], soon: true },
-  { key: "G", path: "/miniaturas", label: "Miniaturas", roles: ["admin"], soon: true },
+  { key: "C", path: "/monitor", label: "Monitor por nicho", roles: ["admin", "editor"] },
+  { key: "D", path: "/virales", label: "Virales de hoy", roles: ["admin", "editor"] },
+  { key: "G", path: "/miniaturas", label: "Miniaturas", roles: ["admin", "editor"] },
   { key: "CH", path: "/canales", label: "Canales propios", roles: ["admin", "editor"], group: "Configuración" },
   { key: "N", path: "/nichos", label: "Nichos", roles: ["admin"], group: "Configuración" },
 ];
@@ -302,7 +304,7 @@ export default function App() {
   if (!role) return <Login onLogin={setRole} />;
 
   const visible = SECTIONS.filter((s) => s.roles.includes(role));
-  const current = visible.find((s) => s.path === path) || visible.find((s) => s.path === "/metadata") || visible[0];
+  const current = visible.find((s) => s.path === path) || visible.find((s) => s.path === "/virales") || visible[0];
   if (current.path !== path) window.history.replaceState({}, "", current.path);
 
   function logout() { session.clear(); setRole(null); go("/"); }
@@ -332,6 +334,9 @@ export default function App() {
       </aside>
       <main className="main">
         {current.path === "/metadata" && <Metadata />}
+        {current.path === "/monitor" && <Monitor />}
+        {current.path === "/virales" && <Virales />}
+        {current.path === "/miniaturas" && <Miniaturas />}
         {current.path === "/canales" && <Canales />}
         {current.path === "/nichos" && <Nichos />}
         {current.soon && <Soon section={current} />}
