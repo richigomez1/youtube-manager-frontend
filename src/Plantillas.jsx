@@ -8,7 +8,7 @@ export default function Plantillas() {
   const [templates, setTemplates] = useState(null);
   const [channels, setChannels] = useState([]);
   const [meta, setMeta] = useState(null);
-  const [editing, setEditing] = useState(null);   // null | {...form}
+  const [editing, setEditing] = useState(null);
   const [note, setNote] = useState(null);
   const isAdmin = session.isAdmin;
 
@@ -42,10 +42,10 @@ export default function Plantillas() {
       <div className="page-head">
         <div>
           <h1>Descripciones rotativas</h1>
-          <p>Plantillas con variables (fecha, signo…). La extensión de Chrome las rellena dentro de YouTube Studio; aquí se crean y se prueban.</p>
+          <p>Plantillas con variables (fecha, signo, frase del día…). La extensión de Chrome las rellena dentro de YouTube Studio.</p>
         </div>
         {isAdmin && !editing && (
-          <div className="row">
+          <div className="row" style={{ flexWrap: "wrap" }}>
             {examples.map((ex) => (
               <button key={ex.name} className="btn" onClick={() => setEditing({ ...EMPTY, ...ex, own_channel_id: "" })}>Cargar: {ex.name}</button>
             ))}
@@ -84,8 +84,8 @@ export default function Plantillas() {
             </div>
           </div>
           <div className="field" style={{ marginTop: 14 }}>
-            <label>Título (opcional; si lo dejas vacío, el título lo pones tú)</label>
-            <input className="input" value={editing.title_template} onChange={f("title_template")} placeholder="{signo} horoscope today {fecha} {emoji}" />
+            <label>Título (usa {"{frase}"} para la frase del día; vacío = el título lo pones tú)</label>
+            <input className="input" value={editing.title_template} onChange={f("title_template")} placeholder={"{signo_may} {emoji} {frase} Horóscopo De Hoy {fecha} | Mhoni Vidente"} />
           </div>
           <div className="field">
             <label>Descripción</label>
@@ -110,12 +110,12 @@ export default function Plantillas() {
 
       {templates === null && <div className="empty">Cargando…</div>}
       {templates && templates.length === 0 && !editing && (
-        <div className="empty"><strong>Sin plantillas todavía</strong>Crea una nueva o carga el ejemplo de Zodiac Attraction para empezar.</div>
+        <div className="empty"><strong>Sin plantillas todavía</strong>Crea una nueva o carga un ejemplo para empezar.</div>
       )}
 
       <div className="stack">
         {templates && templates.map((t) => (
-          <TemplateCard key={t.id} t={t} meta={meta} channels={channels} isAdmin={isAdmin}
+          <TemplateCard key={t.id} t={t} meta={meta} isAdmin={isAdmin}
                         onEdit={() => setEditing({ ...t, own_channel_id: t.own_channel_id ?? "" })} onRemove={() => remove(t)} setNote={setNote} />
         ))}
       </div>
@@ -123,9 +123,10 @@ export default function Plantillas() {
   );
 }
 
-function TemplateCard({ t, meta, channels, isAdmin, onEdit, onRemove, setNote }) {
-  const [sign, setSign] = useState(6);
+function TemplateCard({ t, meta, isAdmin, onEdit, onRemove, setNote }) {
+  const [sign, setSign] = useState(0);
   const [out, setOut] = useState(null);
+  const [phrase, setPhrase] = useState(null);   // null = cargando
   const [videoId, setVideoId] = useState("");
   const [writeTitle, setWriteTitle] = useState(!!t.title_template);
   const [busy, setBusy] = useState(false);
@@ -136,6 +137,17 @@ function TemplateCard({ t, meta, channels, isAdmin, onEdit, onRemove, setNote })
     catch (e) { setNote({ type: "error", text: e.message }); }
   }
   useEffect(() => { preview(); }, [sign, t.id]);
+  useEffect(() => {
+    if (t.uses_phrase) api(`/templates/${t.id}/phrase`).then((p) => setPhrase(p.text || "")).catch(() => setPhrase(""));
+  }, [t.id]);
+
+  async function savePhrase() {
+    try {
+      await api(`/templates/${t.id}/phrase`, { method: "PUT", body: { text: phrase } });
+      setNote({ type: "ok", text: "Frase del día guardada; los 12 signos y la extensión ya la usan." });
+      preview();
+    } catch (e) { setNote({ type: "error", text: e.message }); }
+  }
 
   async function applyTo() {
     const id = videoId.trim().match(/([\w-]{11})(?:[?&]|$)/)?.[1] || videoId.trim();
@@ -159,6 +171,15 @@ function TemplateCard({ t, meta, channels, isAdmin, onEdit, onRemove, setNote })
         </div>
         {isAdmin && <div className="row"><button className="btn btn-sm" onClick={onEdit}>Editar</button><button className="btn btn-sm btn-danger" onClick={onRemove}>Borrar</button></div>}
       </div>
+
+      {t.uses_phrase && phrase !== null && (
+        <div className="row" style={{ marginTop: 12, flexWrap: "wrap", gap: 10 }}>
+          <input className="input grow" style={{ minWidth: 260 }} placeholder="Frase de hoy para el título (ej. POR DIOS 🙏😱🙏 DEBO AVISARTE URGENTE 🍷❤️)"
+                 value={phrase} onChange={(e) => setPhrase(e.target.value)} />
+          <button className="btn btn-primary btn-sm" onClick={savePhrase}>Guardar frase del día</button>
+        </div>
+      )}
+      {out?.phrase_missing && <div className="note note-warn" style={{ marginTop: 10 }}>Falta la frase de hoy: el título saldrá sin ella hasta que la guardes.</div>}
 
       <div className="row" style={{ marginTop: 12, flexWrap: "wrap", gap: 10 }}>
         {t.uses_sign && (
